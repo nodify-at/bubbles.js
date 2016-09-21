@@ -1,7 +1,7 @@
 'use strict';
 
 (function() {
-    var app = angular.module('tribefire.bubble', ['ngSanitize']);
+    var app = angular.module('tribefire.bubble', []);
     app.directive('tribefireBubble', TribefireBubble);
 
     TribefireBubble.$inject = ['DataParser', 'BubbleTreeFactory'];
@@ -19,6 +19,7 @@
                 'enableFlip'  : '@',
                 'handleDrop'  : '='
             },
+            'template': '<div class="bubbletree-wrapper" full-height><div class="bubbletree"></div></div>',
             'link'    : link
         };
 
