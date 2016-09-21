@@ -1,14 +1,13 @@
 'use strict';
 
 (function() {
-    var app = angular.module('tribefire.bubble', []);
+    var app = angular.module('tribefire.bubble', ['ngSanitize']);
     app.directive('tribefireBubble', TribefireBubble);
 
     TribefireBubble.$inject = ['DataParser', 'BubbleTreeFactory'];
     function TribefireBubble(DataParser, BubbleTreeFactory) {
         return {
-            'restrict': 'E',
-            'replace' : true,
+            'restrict': 'A',
             'scope'   : {
                 'nodeSelected': '=',
                 'navigateTo'  : '=',
@@ -19,7 +18,6 @@
                 'enableFlip'  : '@',
                 'handleDrop'  : '='
             },
-            'template': '<div class="bubbletree-wrapper" full-height><div class="bubbletree"></div></div>',
             'link'    : link
         };
 
