@@ -7,7 +7,8 @@
     TribefireBubble.$inject = ['DataParser', 'BubbleTreeFactory'];
     function TribefireBubble(DataParser, BubbleTreeFactory) {
         return {
-            'restrict': 'A',
+            'restrict': 'E',
+            'replace' : true,
             'scope'   : {
                 'nodeSelected': '=',
                 'navigateTo'  : '=',
@@ -18,6 +19,7 @@
                 'enableFlip'  : '@',
                 'handleDrop'  : '='
             },
+            'template': '<div class="bubbletree-wrapper" full-height><div class="bubbletree"></div></div>',
             'link'    : link
         };
 
