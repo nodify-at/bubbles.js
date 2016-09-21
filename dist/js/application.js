@@ -19,7 +19,6 @@
                 'enableFlip'  : '@',
                 'handleDrop'  : '='
             },
-            'template': '<div class="bubbletree-wrapper" full-height><div class="bubbletree"></div></div>',
             'link'    : link
         };
 
@@ -1880,20 +1879,10 @@ BubbleTree.Bubbles.Donut = function(node, bubblechart, origin, radius, angle, co
         me.bc.$container.append(me.label);
 
         var data = me.node;
-        label   = $('.label.' + data.id),
-            factory = new ProgressFactory();
+        label   = $('.label.' + data.id);
 
         if (me.node.droppable) {
             me.enableDrop(data);
-        }
-
-        if (data.progress && data.progress < 1.0) {
-            if (data.progressBar) {
-                data.progressBar.destroy();
-            }
-            if (label.length) {
-                data.progressBar = factory.build(label.get(0), '#575756', 'easeIn', data.progress);
-            }
         }
 
         if (data.timeProgress && data.timeProgress < 1.0) {
@@ -2267,33 +2256,6 @@ helper.url.hide();helper.parent.addClass(settings(this).extraClass);if(settings(
 helper.parent.is(':visible')?helper.parent.fadeTo(settings(current).fade,current.tOpacity):helper.parent.fadeIn(settings(current).fade);}else{helper.parent.show();}update();}function update(event){if($.tooltip.blocked)return;if(event&&event.target.tagName=="OPTION"){return;}if(!track&&helper.parent.is(":visible")){$(document.body).unbind('mousemove',update)}if(current==null){$(document.body).unbind('mousemove',update);return;}helper.parent.removeClass("viewport-right").removeClass("viewport-bottom");var left=helper.parent[0].offsetLeft;var top=helper.parent[0].offsetTop;if(event){left=event.pageX+settings(current).left;top=event.pageY+settings(current).top;var right='auto';if(settings(current).positionLeft){right=$(window).width()-left;left='auto';}helper.parent.css({left:left,right:right,top:top});}var v=viewport(),h=helper.parent[0];if(v.x+v.cx<h.offsetLeft+h.offsetWidth){left-=h.offsetWidth+20+settings(current).left;helper.parent.css({left:left+'px'}).addClass("viewport-right");}if(v.y+v.cy<h.offsetTop+h.offsetHeight){top-=h.offsetHeight+20+settings(current).top;helper.parent.css({top:top+'px'}).addClass("viewport-bottom");}}function viewport(){return{x:$(window).scrollLeft(),y:$(window).scrollTop(),cx:$(window).width(),cy:$(window).height()};}function hide(event){if($.tooltip.blocked)return;if(tID)clearTimeout(tID);current=null;var tsettings=settings(this);function complete(){helper.parent.removeClass(tsettings.extraClass).hide().css("opacity","");}if((!IE||!$.fn.bgiframe)&&tsettings.fade){if(helper.parent.is(':animated'))helper.parent.stop().fadeTo(tsettings.fade,0,complete);else
 helper.parent.stop().fadeOut(tsettings.fade,complete);}else
 complete();if(settings(this).fixPNG)helper.parent.unfixPNG();}})(jQuery);
-function ProgressFactory() {
-    return {
-        build: build
-    };
-
-    function build(container, color, animation, progress) {
-        animation = animation || 'linear';
-
-        var bar = new ProgressBar.Circle(container, {
-            color       : color,
-            trailWidth  : 5,
-            duration    : 500,
-            easing      : animation,
-            strokeWidth : 5,
-
-            step: function (state, circle) {
-                circle.path.setAttribute('stroke', state.color);
-            }
-        });
-        bar.animate(progress, {
-            from: {color: color },
-            to  : {color: color }
-        });
-        return bar;
-    }
-}
-
 /*
  * Raphael 1.5.2 - JavaScript Vector Library
  *
