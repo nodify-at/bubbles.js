@@ -21,6 +21,12 @@ gulp.task('scripts', function () {
                .pipe(gulp.dest('./dist/js'));
 });
 
+gulp.task('scripts-clean', function () {
+    return gulp.src(path.scripts)
+               .pipe(concat('application.js'))
+               .pipe(gulp.dest('./dist/js'));
+});
+
 gulp.task('styles', function () {
     return gulp.src(path.styles)
                .pipe(concat('application.css'))
@@ -28,4 +34,4 @@ gulp.task('styles', function () {
                .pipe(gulp.dest('dist/css'));
 });
 
-gulp.task('dist', ['scripts', 'styles']);
+gulp.task('dist', ['scripts', 'scripts-clean', 'styles']);
