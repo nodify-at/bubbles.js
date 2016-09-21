@@ -1561,20 +1561,10 @@ BubbleTree.Bubbles.Donut = function(node, bubblechart, origin, radius, angle, co
         me.bc.$container.append(me.label);
 
         var data = me.node;
-        label   = $('.label.' + data.id),
-            factory = new ProgressFactory();
+        label   = $('.label.' + data.id);
 
         if (me.node.droppable) {
             me.enableDrop(data);
-        }
-
-        if (data.progress && data.progress < 1.0) {
-            if (data.progressBar) {
-                data.progressBar.destroy();
-            }
-            if (label.length) {
-                data.progressBar = factory.build(label.get(0), '#575756', 'easeIn', data.progress);
-            }
         }
 
         if (data.timeProgress && data.timeProgress < 1.0) {

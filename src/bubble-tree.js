@@ -19,7 +19,6 @@
                 'enableFlip'  : '@',
                 'handleDrop'  : '='
             },
-            'template': '<div class="bubbletree-wrapper" full-height><div class="bubbletree"></div></div>',
             'link'    : link
         };
 
