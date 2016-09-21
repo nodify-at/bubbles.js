@@ -7,6 +7,7 @@ var minify      = require('gulp-minify-css');
 
 var path = {
     scripts: [
+        './src/bubble-tree.js',
         './src/**/*.js'
     ],
     styles: [
