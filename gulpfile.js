@@ -10,6 +10,8 @@ var path = {
         './src/bubble-tree.js',
         './src/bubble-factory.js',
         './src/lib/jquery.browser.min.js',
+        './src/lib/jquery.tooltip.min.js',
+        './src/lib/jquery.history.js',
         './src/lib/raphael.js',
         './src/lib/Tween.js',
         './src/lib/vis4.js',

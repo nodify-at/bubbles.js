@@ -161,6 +161,388 @@
     return window.jQBrowser = b(window.navigator.userAgent), window.jQBrowser.uaMatch = b, a && (a.browser = window.jQBrowser), window.jQBrowser
 });
 /*
+ * jQuery Tooltip plugin 1.3
+ *
+ * http://bassistance.de/jquery-plugins/jquery-plugin-tooltip/
+ * http://docs.jquery.com/Plugins/Tooltip
+ *
+ * Copyright (c) 2006 - 2008 Jörn Zaefferer
+ *
+ * $Id: jquery.tooltip.js 5741 2008-06-21 15:22:16Z joern.zaefferer $
+ * 
+ * Dual licensed under the MIT and GPL licenses:
+ *   http://www.opensource.org/licenses/mit-license.php
+ *   http://www.gnu.org/licenses/gpl.html
+ */
+;(function ($) {
+    var helper = {}, current, title, tID, IE = $.browser.msie && /MSIE\s(5\.5|6\.)/.test(navigator.userAgent), track = false;
+    $.tooltip = {
+        blocked: false,
+        defaults: {delay: 200, fade: false, showURL: true, extraClass: "", top: 15, left: 15, id: "tooltip"},
+        block: function () {
+            $.tooltip.blocked = !$.tooltip.blocked;
+        }
+    };
+    $.fn.extend({
+        tooltip: function (settings) {
+            settings = $.extend({}, $.tooltip.defaults, settings);
+            createHelper(settings);
+            return this.each(function () {
+                $.data(this, "tooltip", settings);
+                this.tOpacity = helper.parent.css("opacity");
+                this.tooltipText = this.title;
+                $(this).removeAttr("title");
+                this.alt = "";
+            }).mouseover(save).mouseout(hide).click(hide);
+        }, fixPNG: IE ? function () {
+            return this.each(function () {
+                var image = $(this).css('backgroundImage');
+                if (image.match(/^url\(["']?(.*\.png)["']?\)$/i)) {
+                    image = RegExp.$1;
+                    $(this).css({
+                        'backgroundImage': 'none',
+                        'filter': "progid:DXImageTransform.Microsoft.AlphaImageLoader(enabled=true, sizingMethod=crop, src='" + image + "')"
+                    }).each(function () {
+                        var position = $(this).css('position');
+                        if (position != 'absolute' && position != 'relative')$(this).css('position', 'relative');
+                    });
+                }
+            });
+        } : function () {
+            return this;
+        }, unfixPNG: IE ? function () {
+            return this.each(function () {
+                $(this).css({'filter': '', backgroundImage: ''});
+            });
+        } : function () {
+            return this;
+        }, hideWhenEmpty: function () {
+            return this.each(function () {
+                $(this)[$(this).html() ? "show" : "hide"]();
+            });
+        }, url: function () {
+            return this.attr('href') || this.attr('src');
+        }
+    });
+    function createHelper(settings) {
+        if (helper.parent)return;
+        helper.parent = $('<div id="' + settings.id + '"><h3></h3><div class="body"></div><div class="url"></div></div>').appendTo(document.body).hide();
+        if ($.fn.bgiframe)helper.parent.bgiframe();
+        helper.title = $('h3', helper.parent);
+        helper.body = $('div.body', helper.parent);
+        helper.url = $('div.url', helper.parent);
+    }
+
+    function settings(element) {
+        return $.data(element, "tooltip");
+    }
+
+    function handle(event) {
+        if (settings(this).delay)tID = setTimeout(show, settings(this).delay); else
+            show();
+        track = !!settings(this).track;
+        $(document.body).bind('mousemove', update);
+        update(event);
+    }
+
+    function save() {
+        if ($.tooltip.blocked || this == current || (!this.tooltipText && !settings(this).bodyHandler))return;
+        current = this;
+        title = this.tooltipText;
+        if (settings(this).bodyHandler) {
+            helper.title.hide();
+            var bodyContent = settings(this).bodyHandler.call(this);
+            if (bodyContent.nodeType || bodyContent.jquery) {
+                helper.body.empty().append(bodyContent)
+            } else {
+                helper.body.html(bodyContent);
+            }
+            helper.body.show();
+        } else if (settings(this).showBody) {
+            var parts = title.split(settings(this).showBody);
+            helper.title.html(parts.shift()).show();
+            helper.body.empty();
+            for (var i = 0, part; (part = parts[i]); i++) {
+                if (i > 0)helper.body.append("<br/>");
+                helper.body.append(part);
+            }
+            helper.body.hideWhenEmpty();
+        } else {
+            helper.title.html(title).show();
+            helper.body.hide();
+        }
+        if (settings(this).showURL && $(this).url())helper.url.html($(this).url().replace('http://', '')).show(); else
+            helper.url.hide();
+        helper.parent.addClass(settings(this).extraClass);
+        if (settings(this).fixPNG)helper.parent.fixPNG();
+        handle.apply(this, arguments);
+    }
+
+    function show() {
+        tID = null;
+        if ((!IE || !$.fn.bgiframe) && settings(current).fade) {
+            if (helper.parent.is(":animated"))helper.parent.stop().show().fadeTo(settings(current).fade, current.tOpacity); else
+                helper.parent.is(':visible') ? helper.parent.fadeTo(settings(current).fade, current.tOpacity) : helper.parent.fadeIn(settings(current).fade);
+        } else {
+            helper.parent.show();
+        }
+        update();
+    }
+
+    function update(event) {
+        if ($.tooltip.blocked)return;
+        if (event && event.target.tagName == "OPTION") {
+            return;
+        }
+        if (!track && helper.parent.is(":visible")) {
+            $(document.body).unbind('mousemove', update)
+        }
+        if (current == null) {
+            $(document.body).unbind('mousemove', update);
+            return;
+        }
+        helper.parent.removeClass("viewport-right").removeClass("viewport-bottom");
+        var left = helper.parent[0].offsetLeft;
+        var top = helper.parent[0].offsetTop;
+        if (event) {
+            left = event.pageX + settings(current).left;
+            top = event.pageY + settings(current).top;
+            var right = 'auto';
+            if (settings(current).positionLeft) {
+                right = $(window).width() - left;
+                left = 'auto';
+            }
+            helper.parent.css({left: left, right: right, top: top});
+        }
+        var v = viewport(), h = helper.parent[0];
+        if (v.x + v.cx < h.offsetLeft + h.offsetWidth) {
+            left -= h.offsetWidth + 20 + settings(current).left;
+            helper.parent.css({left: left + 'px'}).addClass("viewport-right");
+        }
+        if (v.y + v.cy < h.offsetTop + h.offsetHeight) {
+            top -= h.offsetHeight + 20 + settings(current).top;
+            helper.parent.css({top: top + 'px'}).addClass("viewport-bottom");
+        }
+    }
+
+    function viewport() {
+        return {x: $(window).scrollLeft(), y: $(window).scrollTop(), cx: $(window).width(), cy: $(window).height()};
+    }
+
+    function hide(event) {
+        if ($.tooltip.blocked)return;
+        if (tID)clearTimeout(tID);
+        current = null;
+        var tsettings = settings(this);
+
+        function complete() {
+            helper.parent.removeClass(tsettings.extraClass).hide().css("opacity", "");
+        }
+
+        if ((!IE || !$.fn.bgiframe) && tsettings.fade) {
+            if (helper.parent.is(':animated'))helper.parent.stop().fadeTo(tsettings.fade, 0, complete); else
+                helper.parent.stop().fadeOut(tsettings.fade, complete);
+        } else
+            complete();
+        if (settings(this).fixPNG)helper.parent.unfixPNG();
+    }
+})(jQuery);
+/*
+ * jQuery history plugin
+ * 
+ * The MIT License
+ * 
+ * Copyright (c) 2006-2009 Taku Sano (Mikage Sawatari)
+ * Copyright (c) 2010 Takayuki Miwa
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+(function($) {
+    var locationWrapper = {
+        put: function(hash, win) {
+            (win || window).location.hash = this.encoder(hash);
+        },
+        get: function(win) {
+            var hash = ((win || window).location.hash).replace(/^#/, '');
+            try {
+                return $.browser.mozilla ? hash : decodeURIComponent(hash);
+            }
+            catch (error) {
+                return hash;
+            }
+        },
+        encoder: encodeURIComponent
+    };
+
+    var iframeWrapper = {
+        id: "__jQuery_history",
+        init: function() {
+            var html = '<iframe id="'+ this.id +'" style="display:none" src="javascript:false;" />';
+            $("body").prepend(html);
+            return this;
+        },
+        _document: function() {
+            return $("#"+ this.id)[0].contentWindow.document;
+        },
+        put: function(hash) {
+            var doc = this._document();
+            doc.open();
+            doc.close();
+            locationWrapper.put(hash, doc);
+        },
+        get: function() {
+            return locationWrapper.get(this._document());
+        }
+    };
+
+    function initObjects(options) {
+        options = $.extend({
+                unescape: false
+            }, options || {});
+
+        locationWrapper.encoder = encoder(options.unescape);
+
+        function encoder(unescape_) {
+            if(unescape_ === true) {
+                return function(hash){ return hash; };
+            }
+            if(typeof unescape_ == "string" &&
+               (unescape_ = partialDecoder(unescape_.split("")))
+               || typeof unescape_ == "function") {
+                return function(hash) { return unescape_(encodeURIComponent(hash)); };
+            }
+            return encodeURIComponent;
+        }
+
+        function partialDecoder(chars) {
+            var re = new RegExp($.map(chars, encodeURIComponent).join("|"), "ig");
+            return function(enc) { return enc.replace(re, decodeURIComponent); };
+        }
+    }
+
+    var implementations = {};
+
+    implementations.base = {
+        callback: undefined,
+        type: undefined,
+
+        check: function() {},
+        load:  function(hash) {},
+        init:  function(callback, options) {
+            initObjects(options);
+            self.callback = callback;
+            self._options = options;
+            self._init();
+        },
+
+        _init: function() {},
+        _options: {}
+    };
+
+    implementations.timer = {
+        _appState: undefined,
+        _init: function() {
+            var current_hash = locationWrapper.get();
+            self._appState = current_hash;
+            self.callback(current_hash);
+            setInterval(self.check, 100);
+        },
+        check: function() {
+            var current_hash = locationWrapper.get();
+            if(current_hash != self._appState) {
+                self._appState = current_hash;
+                self.callback(current_hash);
+            }
+        },
+        load: function(hash) {
+            if(hash != self._appState) {
+                locationWrapper.put(hash);
+                self._appState = hash;
+                self.callback(hash);
+            }
+        }
+    };
+
+    implementations.iframeTimer = {
+        _appState: undefined,
+        _init: function() {
+            var current_hash = locationWrapper.get();
+            self._appState = current_hash;
+            iframeWrapper.init().put(current_hash);
+            self.callback(current_hash);
+            setInterval(self.check, 100);
+        },
+        check: function() {
+            var iframe_hash = iframeWrapper.get(),
+                location_hash = locationWrapper.get();
+
+            if (location_hash != iframe_hash) {
+                if (location_hash == self._appState) {    // user used Back or Forward button
+                    self._appState = iframe_hash;
+                    locationWrapper.put(iframe_hash);
+                    self.callback(iframe_hash); 
+                } else {                              // user loaded new bookmark
+                    self._appState = location_hash;  
+                    iframeWrapper.put(location_hash);
+                    self.callback(location_hash);
+                }
+            }
+        },
+        load: function(hash) {
+            if(hash != self._appState) {
+                locationWrapper.put(hash);
+                iframeWrapper.put(hash);
+                self._appState = hash;
+                self.callback(hash);
+            }
+        }
+    };
+
+    implementations.hashchangeEvent = {
+        _init: function() {
+            self.callback(locationWrapper.get());
+            $(window).bind('hashchange', self.check);
+        },
+        check: function() {
+            self.callback(locationWrapper.get());
+        },
+        load: function(hash) {
+            locationWrapper.put(hash);
+        }
+    };
+
+    var self = $.extend({}, implementations.base);
+
+    if($.browser.msie && ($.browser.version < 8 || document.documentMode < 8)) {
+        self.type = 'iframeTimer';
+    } else if("onhashchange" in window) {
+        self.type = 'hashchangeEvent';
+    } else {
+        self.type = 'timer';
+    }
+
+    $.extend(self, implementations[self.type]);
+    $.history = self;
+})(jQuery);
+
+/*
  * Raphael 1.5.2 - JavaScript Vector Library
  *
  * Copyright (c) 2010 Dmitry Baranovskiy (http://raphaeljs.com)
