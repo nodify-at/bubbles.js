@@ -1,7 +1,7 @@
 'use strict';
 
 (function() {
-    var app = angular.module('tribefire.bubble', []);
+    var app = angular.module('tribefire.bubble', ['ngSanitize']);
     app.directive('tribefireBubble', TribefireBubble);
 
     TribefireBubble.$inject = ['DataParser', 'BubbleTreeFactory'];
